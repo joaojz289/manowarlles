@@ -1,0 +1,144 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ARQUIVO "alunos.txt"
+
+// Criar arquivo inicial
+void criarArquivoSeNaoExistir() {
+    FILE *f = fopen(ARQUIVO, "r");
+
+    if (f == NULL) {
+        f = fopen(ARQUIVO, "w");
+
+        fprintf(f, "01;Joao Silva;12345678901;101;A\n");
+        fprintf(f, "02;Maria Souza;10987654321;102;B\n");
+
+        printf("Arquivo criado com alunos iniciais.\n");
+    }
+
+    fclose(f);
+}
+
+// Verificar se ID já existe
+int idExiste(char idBusca[]) {
+    FILE *f = fopen(ARQUIVO, "r");
+
+    char id[5], nome[100], cpf[12], matricula[20], turma[10];
+
+    while (fscanf(f, "%4[^;];%99[^;];%11[^;];%19[^;];%9[^\n]\n",
+                  id, nome, cpf, matricula, turma) != EOF) {
+
+        if (strcmp(id, idBusca) == 0) {
+            fclose(f);
+            return 1;
+        }
+    }
+
+    fclose(f);
+    return 0;
+}
+
+// Buscar aluno
+void buscarAlunoPorID(char idBusca[]) {
+    FILE *f = fopen(ARQUIVO, "r");
+
+    char id[5], nome[100], cpf[12], matricula[20], turma[10];
+    int encontrado = 0;
+
+    while (fscanf(f, "%4[^;];%99[^;];%11[^;];%19[^;];%9[^\n]\n",
+                  id, nome, cpf, matricula, turma) != EOF) {
+
+        if (strcmp(id, idBusca) == 0) {
+            printf("\nAluno encontrado:\n");
+            printf("ID: %s\nNome: %s\nCPF: %s\nMatricula: %s\nTurma: %s\n",
+                   id, nome, cpf, matricula, turma);
+            encontrado = 1;
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("\nAluno nao encontrado.\n");
+    }
+
+    fclose(f);
+}
+
+// Cadastrar aluno
+void cadastrarAluno() {
+    FILE *f = fopen(ARQUIVO, "a");
+
+    char id[5], nome[100], cpf[12], matricula[20], turma[10];
+
+    printf("Novo aluno:\n");
+
+    // Garantir ID único
+    do {
+        printf("ID: ");
+        scanf("%4s", id);
+
+        if (idExiste(id)) {
+            printf("ID ja existe! Digite outro.\n");
+        }
+
+    } while (idExiste(id));
+
+    printf("Nome: ");
+    scanf(" %[^\n]", nome);
+
+    // CPF com 11 dígitos
+    printf("CPF (11 digitos): ");
+    scanf("%11s", cpf);
+
+    printf("Matricula: ");
+    scanf("%19s", matricula);
+
+    printf("Turma: ");
+    scanf("%9s", turma);
+
+    fprintf(f, "%s;%s;%s;%s;%s\n", id, nome, cpf, matricula, turma);
+
+    printf("\nAluno cadastrado com sucesso!\n");
+
+    fclose(f);
+}
+
+// Programa principal
+int main() {
+    int opcao;
+    char idBusca[5];
+
+    criarArquivoSeNaoExistir();
+
+    do {
+        printf("\n--- MENU ---\n");
+        printf("1 - Buscar aluno\n");
+        printf("2 - Cadastrar aluno\n");
+        printf("0 - Sair\n");
+        printf("Escolha: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                printf("Digite o ID: ");
+                scanf("%4s", idBusca);
+                buscarAlunoPorID(idBusca);
+                break;
+
+            case 2:
+                cadastrarAluno();
+                break;
+
+            case 0:
+                printf("Saindo...\n");
+                break;
+
+            default:
+                printf("Opcao invalida!\n");
+        }
+
+    } while (opcao != 0);
+
+    return 0;
+}
