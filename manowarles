@@ -1,144 +1,744 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
-#define ARQUIVO "alunos.txt"
+/* ======================== STRUCTS ======================== */
 
-// Criar arquivo inicial
-void criarArquivoSeNaoExistir() {
-    FILE *f = fopen(ARQUIVO, "r");
+typedef struct {
+    int  id;
+    char nome[80];
+    char cpf[15];
+    char telefone[16];
+    char matricula[20];
+    char curso[50];
+} Aluno;
 
-    if (f == NULL) {
-        f = fopen(ARQUIVO, "w");
+typedef struct {
+    int  id;
+    char nome[80];
+    char cpf[15];
+    char telefone[16];
+    char cartao_sus[20];
+    char convenio[50];
+} Paciente;
 
-        fprintf(f, "01;Joao Silva;12345678901;101;A\n");
-        fprintf(f, "02;Maria Souza;10987654321;102;B\n");
+typedef struct {
+    int  id;
+    char nome[80];
+    char cpf[15];
+    char telefone[16];
+    char num_conta[20];
+    char tipo_conta[30];
+} Cliente;
 
-        printf("Arquivo criado com alunos iniciais.\n");
-    }
+typedef struct {
+    int  id;
+    char nome[80];
+    char cpf[15];
+    char telefone[16];
+    char num_reserva[20];
+    char tipo_quarto[30];
+} Hospede;
 
-    fclose(f);
+/* ======================== ARQUIVOS ======================== */
+
+#define ARQ_ESCOLA   "escola.dat"
+#define ARQ_HOSPITAL "hospital.dat"
+#define ARQ_BANCO    "banco.dat"
+#define ARQ_HOTEL    "hotel.dat"
+
+#define TXT_ESCOLA   "escola.txt"
+#define TXT_HOSPITAL "hospital.txt"
+#define TXT_BANCO    "banco.txt"
+#define TXT_HOTEL    "hotel.txt"
+
+/* ======================== UTILITARIOS ======================== */
+
+void limpar_tela() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
 }
 
-// Verificar se ID já existe
-int idExiste(char idBusca[]) {
-    FILE *f = fopen(ARQUIVO, "r");
+void pausar() {
+    printf("\n  Pressione ENTER para continuar...");
+    getchar();
+    getchar();
+}
 
-    char id[5], nome[100], cpf[12], matricula[20], turma[10];
+void linha(int n)  { for (int i=0;i<n;i++) printf("="); printf("\n"); }
+void linhaf(int n) { for (int i=0;i<n;i++) printf("-"); printf("\n"); }
 
-    while (fscanf(f, "%4[^;];%99[^;];%11[^;];%19[^;];%9[^\n]\n",
-                  id, nome, cpf, matricula, turma) != EOF) {
+int proximo_id(const char *arq, size_t tam) {
+    FILE *f = fopen(arq, "rb");
+    if (!f) return 1;
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    fclose(f);
+    return (int)(sz / tam) + 1;
+}
 
-        if (strcmp(id, idBusca) == 0) {
-            fclose(f);
-            return 1;
+void timestamp(char *buf, int bufsz) {
+    time_t t = time(NULL);
+    struct tm *tm = localtime(&t);
+    strftime(buf, bufsz, "%d/%m/%Y %H:%M:%S", tm);
+}
+
+/* ======================== GERAR TXT ======================== */
+
+void escola_gerar_txt() {
+    Aluno a;
+    char ts[30];
+    timestamp(ts, sizeof(ts));
+    FILE *dat = fopen(ARQ_ESCOLA, "rb");
+    FILE *txt = fopen(TXT_ESCOLA, "w");
+    if (!txt) return;
+    fprintf(txt, "============================================================\n");
+    fprintf(txt, "  RELATORIO - ESCOLA\n");
+    fprintf(txt, "  Gerado em: %s\n", ts);
+    fprintf(txt, "============================================================\n\n");
+    int count = 0;
+    if (dat) {
+        while (fread(&a, sizeof(Aluno), 1, dat)) {
+            count++;
+            fprintf(txt, "  ID        : %d\n", a.id);
+            fprintf(txt, "  Nome      : %s\n", a.nome);
+            fprintf(txt, "  CPF       : %s\n", a.cpf);
+            fprintf(txt, "  Telefone  : %s\n", a.telefone);
+            fprintf(txt, "  Matricula : %s\n", a.matricula);
+            fprintf(txt, "  Curso     : %s\n", a.curso);
+            fprintf(txt, "------------------------------------------------------------\n");
+        }
+        fclose(dat);
+    }
+    fprintf(txt, "\n  Total de alunos: %d\n", count);
+    fclose(txt);
+}
+
+void hospital_gerar_txt() {
+    Paciente p;
+    char ts[30];
+    timestamp(ts, sizeof(ts));
+    FILE *dat = fopen(ARQ_HOSPITAL, "rb");
+    FILE *txt = fopen(TXT_HOSPITAL, "w");
+    if (!txt) return;
+    fprintf(txt, "============================================================\n");
+    fprintf(txt, "  RELATORIO - HOSPITAL\n");
+    fprintf(txt, "  Gerado em: %s\n", ts);
+    fprintf(txt, "============================================================\n\n");
+    int count = 0;
+    if (dat) {
+        while (fread(&p, sizeof(Paciente), 1, dat)) {
+            count++;
+            fprintf(txt, "  ID         : %d\n", p.id);
+            fprintf(txt, "  Nome       : %s\n", p.nome);
+            fprintf(txt, "  CPF        : %s\n", p.cpf);
+            fprintf(txt, "  Telefone   : %s\n", p.telefone);
+            fprintf(txt, "  Cartao SUS : %s\n", p.cartao_sus);
+            fprintf(txt, "  Convenio   : %s\n", p.convenio);
+            fprintf(txt, "------------------------------------------------------------\n");
+        }
+        fclose(dat);
+    }
+    fprintf(txt, "\n  Total de pacientes: %d\n", count);
+    fclose(txt);
+}
+
+void banco_gerar_txt() {
+    Cliente c;
+    char ts[30];
+    timestamp(ts, sizeof(ts));
+    FILE *dat = fopen(ARQ_BANCO, "rb");
+    FILE *txt = fopen(TXT_BANCO, "w");
+    if (!txt) return;
+    fprintf(txt, "============================================================\n");
+    fprintf(txt, "  RELATORIO - BANCO\n");
+    fprintf(txt, "  Gerado em: %s\n", ts);
+    fprintf(txt, "============================================================\n\n");
+    int count = 0;
+    if (dat) {
+        while (fread(&c, sizeof(Cliente), 1, dat)) {
+            count++;
+            fprintf(txt, "  ID         : %d\n", c.id);
+            fprintf(txt, "  Nome       : %s\n", c.nome);
+            fprintf(txt, "  CPF        : %s\n", c.cpf);
+            fprintf(txt, "  Telefone   : %s\n", c.telefone);
+            fprintf(txt, "  Num. Conta : %s\n", c.num_conta);
+            fprintf(txt, "  Tipo       : %s\n", c.tipo_conta);
+            fprintf(txt, "------------------------------------------------------------\n");
+        }
+        fclose(dat);
+    }
+    fprintf(txt, "\n  Total de clientes: %d\n", count);
+    fclose(txt);
+}
+
+void hotel_gerar_txt() {
+    Hospede h;
+    char ts[30];
+    timestamp(ts, sizeof(ts));
+    FILE *dat = fopen(ARQ_HOTEL, "rb");
+    FILE *txt = fopen(TXT_HOTEL, "w");
+    if (!txt) return;
+    fprintf(txt, "============================================================\n");
+    fprintf(txt, "  RELATORIO - HOTEL\n");
+    fprintf(txt, "  Gerado em: %s\n", ts);
+    fprintf(txt, "============================================================\n\n");
+    int count = 0;
+    if (dat) {
+        while (fread(&h, sizeof(Hospede), 1, dat)) {
+            count++;
+            fprintf(txt, "  ID           : %d\n", h.id);
+            fprintf(txt, "  Nome         : %s\n", h.nome);
+            fprintf(txt, "  CPF          : %s\n", h.cpf);
+            fprintf(txt, "  Telefone     : %s\n", h.telefone);
+            fprintf(txt, "  Num. Reserva : %s\n", h.num_reserva);
+            fprintf(txt, "  Tipo Quarto  : %s\n", h.tipo_quarto);
+            fprintf(txt, "------------------------------------------------------------\n");
+        }
+        fclose(dat);
+    }
+    fprintf(txt, "\n  Total de hospedes: %d\n", count);
+    fclose(txt);
+}
+
+/* ======================== POPULAR DADOS INICIAIS ======================== */
+
+void escola_popular() {
+    FILE *f = fopen(ARQ_ESCOLA, "rb");
+    if (f) { fclose(f); return; }
+    Aluno p[] = {
+        {1,"Carlos Eduardo Silva",  "111.222.333-44","(86)99111-0001","MAT-001","Engenharia de Software"},
+        {2,"Ana Paula Ferreira",    "222.333.444-55","(86)99111-0002","MAT-002","Medicina"},
+        {3,"Lucas Oliveira Santos", "333.444.555-66","(86)99111-0003","MAT-003","Direito"},
+        {4,"Fernanda Costa Lima",   "444.555.666-77","(86)99111-0004","MAT-004","Arquitetura"},
+        {5,"Rafael Souza Mendes",   "555.666.777-88","(86)99111-0005","MAT-005","Administracao"}
+    };
+    f = fopen(ARQ_ESCOLA, "wb");
+    if (!f) return;
+    for (int i=0;i<5;i++) fwrite(&p[i], sizeof(Aluno), 1, f);
+    fclose(f);
+    escola_gerar_txt();
+}
+
+void hospital_popular() {
+    FILE *f = fopen(ARQ_HOSPITAL, "rb");
+    if (f) { fclose(f); return; }
+    Paciente p[] = {
+        {1,"Maria das Gracas Rocha", "101.202.303-40","(86)99222-0001","SUS-001001","Unimed"},
+        {2,"Jose Antonio Barros",    "202.303.404-50","(86)99222-0002","SUS-002002","Bradesco Saude"},
+        {3,"Patricia Alves Nunes",   "303.404.505-60","(86)99222-0003","SUS-003003","Particular"},
+        {4,"Roberto Henrique Pinto", "404.505.606-70","(86)99222-0004","SUS-004004","Amil"},
+        {5,"Juliana Martins Soares", "505.606.707-80","(86)99222-0005","SUS-005005","SulAmerica"}
+    };
+    f = fopen(ARQ_HOSPITAL, "wb");
+    if (!f) return;
+    for (int i=0;i<5;i++) fwrite(&p[i], sizeof(Paciente), 1, f);
+    fclose(f);
+    hospital_gerar_txt();
+}
+
+void banco_popular() {
+    FILE *f = fopen(ARQ_BANCO, "rb");
+    if (f) { fclose(f); return; }
+    Cliente p[] = {
+        {1,"Diego Carvalho Ramos",   "601.702.803-90","(86)99333-0001","0001-1","Corrente"},
+        {2,"Camila Freitas Duarte",  "702.803.904-01","(86)99333-0002","0002-2","Poupanca"},
+        {3,"Thiago Nascimento Cruz", "803.904.005-12","(86)99333-0003","0003-3","Salario"},
+        {4,"Larissa Gomes Teixeira", "904.005.106-23","(86)99333-0004","0004-4","Corrente"},
+        {5,"Anderson Lima Pereira",  "005.106.207-34","(86)99333-0005","0005-5","Poupanca"}
+    };
+    f = fopen(ARQ_BANCO, "wb");
+    if (!f) return;
+    for (int i=0;i<5;i++) fwrite(&p[i], sizeof(Cliente), 1, f);
+    fclose(f);
+    banco_gerar_txt();
+}
+
+void hotel_popular() {
+    FILE *f = fopen(ARQ_HOTEL, "rb");
+    if (f) { fclose(f); return; }
+    Hospede p[] = {
+        {1,"Bruna Cavalcante Dias",  "111.333.555-77","(86)99444-0001","RES-0001","Suite"},
+        {2,"Marcos Aurelio Vieira",  "222.444.666-88","(86)99444-0002","RES-0002","Double"},
+        {3,"Sabrina Torres Machado", "333.555.777-99","(86)99444-0003","RES-0003","Single"},
+        {4,"Felipe Araujo Campos",   "444.666.888-00","(86)99444-0004","RES-0004","Suite"},
+        {5,"Tatiane Ribeiro Farias", "555.777.999-11","(86)99444-0005","RES-0005","Double"}
+    };
+    f = fopen(ARQ_HOTEL, "wb");
+    if (!f) return;
+    for (int i=0;i<5;i++) fwrite(&p[i], sizeof(Hospede), 1, f);
+    fclose(f);
+    hotel_gerar_txt();
+}
+
+/* ======================== ESCOLA ======================== */
+
+void escola_cadastrar() {
+    Aluno a;
+    a.id = proximo_id(ARQ_ESCOLA, sizeof(Aluno));
+    limpar_tela();
+    printf("\n  [ESCOLA] Novo Aluno  |  ID gerado: %d\n", a.id);
+    linha(50);
+    printf("  Nome      : "); scanf(" %79[^\n]", a.nome);
+    printf("  CPF       : "); scanf(" %14[^\n]", a.cpf);
+    printf("  Telefone  : "); scanf(" %15[^\n]", a.telefone);
+    printf("  Matricula : "); scanf(" %19[^\n]", a.matricula);
+    printf("  Curso     : "); scanf(" %49[^\n]", a.curso);
+    FILE *f = fopen(ARQ_ESCOLA, "ab");
+    if (!f) { printf("  ERRO!\n"); return; }
+    fwrite(&a, sizeof(Aluno), 1, f);
+    fclose(f);
+    escola_gerar_txt();
+    printf("\n  Aluno cadastrado! ID = %d\n", a.id);
+    printf("  '%s' atualizado.\n", TXT_ESCOLA);
+}
+
+void escola_listar() {
+    Aluno a;
+    FILE *f = fopen(ARQ_ESCOLA, "rb");
+    limpar_tela();
+    printf("\n  [ESCOLA] Lista de Alunos\n"); linha(60);
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int n=0;
+    while (fread(&a, sizeof(Aluno), 1, f)) {
+        n++;
+        printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Matricula: %s | Curso: %s\n",
+               a.id, a.nome, a.cpf, a.telefone, a.matricula, a.curso);
+        linhaf(60);
+    }
+    fclose(f);
+    if (!n) printf("  Nenhum registro.\n");
+    else printf("  Total: %d\n", n);
+}
+
+void escola_buscar() {
+    Aluno a; char cpf[15];
+    limpar_tela();
+    printf("\n  [ESCOLA] Buscar por CPF\n"); linha(50);
+    printf("  CPF: "); scanf(" %14[^\n]", cpf);
+    FILE *f = fopen(ARQ_ESCOLA, "rb");
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int achou=0;
+    while (fread(&a, sizeof(Aluno), 1, f)) {
+        if (strcmp(a.cpf, cpf)==0) {
+            linhaf(50);
+            printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Matricula: %s | Curso: %s\n",
+                   a.id, a.nome, a.cpf, a.telefone, a.matricula, a.curso);
+            linhaf(50); achou=1;
         }
     }
-
     fclose(f);
+    if (!achou) printf("  Nao encontrado.\n");
+}
+
+void escola_buscar_id() {
+    Aluno a; int id;
+    limpar_tela();
+    printf("\n  [ESCOLA] Buscar por ID\n"); linha(50);
+    printf("  ID: "); scanf("%d", &id);
+    FILE *f = fopen(ARQ_ESCOLA, "rb");
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int achou=0;
+    while (fread(&a, sizeof(Aluno), 1, f)) {
+        if (a.id==id) {
+            linhaf(50);
+            printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Matricula: %s | Curso: %s\n",
+                   a.id, a.nome, a.cpf, a.telefone, a.matricula, a.curso);
+            linhaf(50); achou=1;
+        }
+    }
+    fclose(f);
+    if (!achou) printf("  Nao encontrado.\n");
+}
+
+void menu_escola() {
+    int op;
+    do {
+        limpar_tela(); linha(44);
+        printf("    ESCOLA\n"); linha(44);
+        printf("  1. Cadastrar Aluno\n");
+        printf("  2. Listar Todos\n");
+        printf("  3. Buscar por CPF\n");
+        printf("  4. Buscar por ID\n");
+        printf("  0. Voltar\n");
+        linha(44);
+        printf("  Opcao: "); scanf("%d", &op);
+        switch(op) {
+            case 1: escola_cadastrar(); pausar(); break;
+            case 2: escola_listar();    pausar(); break;
+            case 3: escola_buscar();    pausar(); break;
+            case 4: escola_buscar_id(); pausar(); break;
+        }
+    } while(op!=0);
+}
+
+/* ======================== HOSPITAL ======================== */
+
+void hospital_cadastrar() {
+    Paciente p;
+    p.id = proximo_id(ARQ_HOSPITAL, sizeof(Paciente));
+    limpar_tela();
+    printf("\n  [HOSPITAL] Novo Paciente  |  ID gerado: %d\n", p.id);
+    linha(50);
+    printf("  Nome        : "); scanf(" %79[^\n]", p.nome);
+    printf("  CPF         : "); scanf(" %14[^\n]", p.cpf);
+    printf("  Telefone    : "); scanf(" %15[^\n]", p.telefone);
+    printf("  Cartao SUS  : "); scanf(" %19[^\n]", p.cartao_sus);
+    printf("  Convenio    : "); scanf(" %49[^\n]", p.convenio);
+    FILE *f = fopen(ARQ_HOSPITAL, "ab");
+    if (!f) { printf("  ERRO!\n"); return; }
+    fwrite(&p, sizeof(Paciente), 1, f);
+    fclose(f);
+    hospital_gerar_txt();
+    printf("\n  Paciente cadastrado! ID = %d\n", p.id);
+    printf("  '%s' atualizado.\n", TXT_HOSPITAL);
+}
+
+void hospital_listar() {
+    Paciente p;
+    FILE *f = fopen(ARQ_HOSPITAL, "rb");
+    limpar_tela();
+    printf("\n  [HOSPITAL] Lista de Pacientes\n"); linha(60);
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int n=0;
+    while (fread(&p, sizeof(Paciente), 1, f)) {
+        n++;
+        printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  SUS: %s | Convenio: %s\n",
+               p.id, p.nome, p.cpf, p.telefone, p.cartao_sus, p.convenio);
+        linhaf(60);
+    }
+    fclose(f);
+    if (!n) printf("  Nenhum registro.\n");
+    else printf("  Total: %d\n", n);
+}
+
+void hospital_buscar() {
+    Paciente p; char cpf[15];
+    limpar_tela();
+    printf("\n  [HOSPITAL] Buscar por CPF\n"); linha(50);
+    printf("  CPF: "); scanf(" %14[^\n]", cpf);
+    FILE *f = fopen(ARQ_HOSPITAL, "rb");
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int achou=0;
+    while (fread(&p, sizeof(Paciente), 1, f)) {
+        if (strcmp(p.cpf, cpf)==0) {
+            linhaf(50);
+            printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  SUS: %s | Convenio: %s\n",
+                   p.id, p.nome, p.cpf, p.telefone, p.cartao_sus, p.convenio);
+            linhaf(50); achou=1;
+        }
+    }
+    fclose(f);
+    if (!achou) printf("  Nao encontrado.\n");
+}
+
+void hospital_buscar_id() {
+    Paciente p; int id;
+    limpar_tela();
+    printf("\n  [HOSPITAL] Buscar por ID\n"); linha(50);
+    printf("  ID: "); scanf("%d", &id);
+    FILE *f = fopen(ARQ_HOSPITAL, "rb");
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int achou=0;
+    while (fread(&p, sizeof(Paciente), 1, f)) {
+        if (p.id==id) {
+            linhaf(50);
+            printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  SUS: %s | Convenio: %s\n",
+                   p.id, p.nome, p.cpf, p.telefone, p.cartao_sus, p.convenio);
+            linhaf(50); achou=1;
+        }
+    }
+    fclose(f);
+    if (!achou) printf("  Nao encontrado.\n");
+}
+
+void menu_hospital() {
+    int op;
+    do {
+        limpar_tela(); linha(44);
+        printf("    HOSPITAL\n"); linha(44);
+        printf("  1. Cadastrar Paciente\n");
+        printf("  2. Listar Todos\n");
+        printf("  3. Buscar por CPF\n");
+        printf("  4. Buscar por ID\n");
+        printf("  0. Voltar\n");
+        linha(44);
+        printf("  Opcao: "); scanf("%d", &op);
+        switch(op) {
+            case 1: hospital_cadastrar(); pausar(); break;
+            case 2: hospital_listar();    pausar(); break;
+            case 3: hospital_buscar();    pausar(); break;
+            case 4: hospital_buscar_id(); pausar(); break;
+        }
+    } while(op!=0);
+}
+
+/* ======================== BANCO ======================== */
+
+void banco_cadastrar() {
+    Cliente c;
+    c.id = proximo_id(ARQ_BANCO, sizeof(Cliente));
+    limpar_tela();
+    printf("\n  [BANCO] Novo Cliente  |  ID gerado: %d\n", c.id);
+    linha(50);
+    printf("  Nome        : "); scanf(" %79[^\n]", c.nome);
+    printf("  CPF         : "); scanf(" %14[^\n]", c.cpf);
+    printf("  Telefone    : "); scanf(" %15[^\n]", c.telefone);
+    printf("  Num. Conta  : "); scanf(" %19[^\n]", c.num_conta);
+    printf("  Tipo (Corrente/Poupanca/Salario): "); scanf(" %29[^\n]", c.tipo_conta);
+    FILE *f = fopen(ARQ_BANCO, "ab");
+    if (!f) { printf("  ERRO!\n"); return; }
+    fwrite(&c, sizeof(Cliente), 1, f);
+    fclose(f);
+    banco_gerar_txt();
+    printf("\n  Cliente cadastrado! ID = %d\n", c.id);
+    printf("  '%s' atualizado.\n", TXT_BANCO);
+}
+
+void banco_listar() {
+    Cliente c;
+    FILE *f = fopen(ARQ_BANCO, "rb");
+    limpar_tela();
+    printf("\n  [BANCO] Lista de Clientes\n"); linha(60);
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int n=0;
+    while (fread(&c, sizeof(Cliente), 1, f)) {
+        n++;
+        printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Conta: %s | Tipo: %s\n",
+               c.id, c.nome, c.cpf, c.telefone, c.num_conta, c.tipo_conta);
+        linhaf(60);
+    }
+    fclose(f);
+    if (!n) printf("  Nenhum registro.\n");
+    else printf("  Total: %d\n", n);
+}
+
+void banco_buscar() {
+    Cliente c; char cpf[15];
+    limpar_tela();
+    printf("\n  [BANCO] Buscar por CPF\n"); linha(50);
+    printf("  CPF: "); scanf(" %14[^\n]", cpf);
+    FILE *f = fopen(ARQ_BANCO, "rb");
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int achou=0;
+    while (fread(&c, sizeof(Cliente), 1, f)) {
+        if (strcmp(c.cpf, cpf)==0) {
+            linhaf(50);
+            printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Conta: %s | Tipo: %s\n",
+                   c.id, c.nome, c.cpf, c.telefone, c.num_conta, c.tipo_conta);
+            linhaf(50); achou=1;
+        }
+    }
+    fclose(f);
+    if (!achou) printf("  Nao encontrado.\n");
+}
+
+void banco_buscar_id() {
+    Cliente c; int id;
+    limpar_tela();
+    printf("\n  [BANCO] Buscar por ID\n"); linha(50);
+    printf("  ID: "); scanf("%d", &id);
+    FILE *f = fopen(ARQ_BANCO, "rb");
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int achou=0;
+    while (fread(&c, sizeof(Cliente), 1, f)) {
+        if (c.id==id) {
+            linhaf(50);
+            printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Conta: %s | Tipo: %s\n",
+                   c.id, c.nome, c.cpf, c.telefone, c.num_conta, c.tipo_conta);
+            linhaf(50); achou=1;
+        }
+    }
+    fclose(f);
+    if (!achou) printf("  Nao encontrado.\n");
+}
+
+void menu_banco() {
+    int op;
+    do {
+        limpar_tela(); linha(44);
+        printf("    BANCO\n"); linha(44);
+        printf("  1. Cadastrar Cliente\n");
+        printf("  2. Listar Todos\n");
+        printf("  3. Buscar por CPF\n");
+        printf("  4. Buscar por ID\n");
+        printf("  0. Voltar\n");
+        linha(44);
+        printf("  Opcao: "); scanf("%d", &op);
+        switch(op) {
+            case 1: banco_cadastrar(); pausar(); break;
+            case 2: banco_listar();    pausar(); break;
+            case 3: banco_buscar();    pausar(); break;
+            case 4: banco_buscar_id(); pausar(); break;
+        }
+    } while(op!=0);
+}
+
+/* ======================== HOTEL ======================== */
+
+void hotel_cadastrar() {
+    Hospede h;
+    h.id = proximo_id(ARQ_HOTEL, sizeof(Hospede));
+    limpar_tela();
+    printf("\n  [HOTEL] Novo Hospede  |  ID gerado: %d\n", h.id);
+    linha(50);
+    printf("  Nome         : "); scanf(" %79[^\n]", h.nome);
+    printf("  CPF          : "); scanf(" %14[^\n]", h.cpf);
+    printf("  Telefone     : "); scanf(" %15[^\n]", h.telefone);
+    printf("  Num. Reserva : "); scanf(" %19[^\n]", h.num_reserva);
+    printf("  Tipo (Single/Double/Suite): "); scanf(" %29[^\n]", h.tipo_quarto);
+    FILE *f = fopen(ARQ_HOTEL, "ab");
+    if (!f) { printf("  ERRO!\n"); return; }
+    fwrite(&h, sizeof(Hospede), 1, f);
+    fclose(f);
+    hotel_gerar_txt();
+    printf("\n  Hospede cadastrado! ID = %d\n", h.id);
+    printf("  '%s' atualizado.\n", TXT_HOTEL);
+}
+
+void hotel_listar() {
+    Hospede h;
+    FILE *f = fopen(ARQ_HOTEL, "rb");
+    limpar_tela();
+    printf("\n  [HOTEL] Lista de Hospedes\n"); linha(60);
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int n=0;
+    while (fread(&h, sizeof(Hospede), 1, f)) {
+        n++;
+        printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Reserva: %s | Quarto: %s\n",
+               h.id, h.nome, h.cpf, h.telefone, h.num_reserva, h.tipo_quarto);
+        linhaf(60);
+    }
+    fclose(f);
+    if (!n) printf("  Nenhum registro.\n");
+    else printf("  Total: %d\n", n);
+}
+
+void hotel_buscar() {
+    Hospede h; char cpf[15];
+    limpar_tela();
+    printf("\n  [HOTEL] Buscar por CPF\n"); linha(50);
+    printf("  CPF: "); scanf(" %14[^\n]", cpf);
+    FILE *f = fopen(ARQ_HOTEL, "rb");
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int achou=0;
+    while (fread(&h, sizeof(Hospede), 1, f)) {
+        if (strcmp(h.cpf, cpf)==0) {
+            linhaf(50);
+            printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Reserva: %s | Quarto: %s\n",
+                   h.id, h.nome, h.cpf, h.telefone, h.num_reserva, h.tipo_quarto);
+            linhaf(50); achou=1;
+        }
+    }
+    fclose(f);
+    if (!achou) printf("  Nao encontrado.\n");
+}
+
+void hotel_buscar_id() {
+    Hospede h; int id;
+    limpar_tela();
+    printf("\n  [HOTEL] Buscar por ID\n"); linha(50);
+    printf("  ID: "); scanf("%d", &id);
+    FILE *f = fopen(ARQ_HOTEL, "rb");
+    if (!f) { printf("  Nenhum registro.\n"); return; }
+    int achou=0;
+    while (fread(&h, sizeof(Hospede), 1, f)) {
+        if (h.id==id) {
+            linhaf(50);
+            printf("  ID: %d | Nome: %s\n  CPF: %s | Tel: %s\n  Reserva: %s | Quarto: %s\n",
+                   h.id, h.nome, h.cpf, h.telefone, h.num_reserva, h.tipo_quarto);
+            linhaf(50); achou=1;
+        }
+    }
+    fclose(f);
+    if (!achou) printf("  Nao encontrado.\n");
+}
+
+void menu_hotel() {
+    int op;
+    do {
+        limpar_tela(); linha(44);
+        printf("    HOTEL\n"); linha(44);
+        printf("  1. Cadastrar Hospede\n");
+        printf("  2. Listar Todos\n");
+        printf("  3. Buscar por CPF\n");
+        printf("  4. Buscar por ID\n");
+        printf("  0. Voltar\n");
+        linha(44);
+        printf("  Opcao: "); scanf("%d", &op);
+        switch(op) {
+            case 1: hotel_cadastrar(); pausar(); break;
+            case 2: hotel_listar();    pausar(); break;
+            case 3: hotel_buscar();    pausar(); break;
+            case 4: hotel_buscar_id(); pausar(); break;
+        }
+    } while(op!=0);
+}
+
+/* ======================== LOGIN ======================== */
+
+#define USUARIO "admin"
+#define SENHA   "1234"
+
+int fazer_login() {
+    char u[30], s[30];
+    int tentativas = 3;
+    while (tentativas > 0) {
+        limpar_tela(); linha(44);
+        printf("         LOGIN DO SISTEMA\n"); linha(44);
+        printf("  Usuario : "); scanf(" %29[^\n]", u);
+        printf("  Senha   : "); scanf(" %29[^\n]", s);
+        if (strcmp(u, USUARIO)==0 && strcmp(s, SENHA)==0) {
+            printf("\n  Login realizado com sucesso!\n");
+            pausar();
+            return 1;
+        }
+        tentativas--;
+        printf("\n  Usuario ou senha incorretos!");
+        if (tentativas > 0) printf(" Tentativas restantes: %d\n", tentativas);
+        else printf("\n");
+        pausar();
+    }
+    printf("\n  Tentativas esgotadas. Encerrando...\n");
     return 0;
 }
 
-// Buscar aluno
-void buscarAlunoPorID(char idBusca[]) {
-    FILE *f = fopen(ARQUIVO, "r");
+/* ======================== MAIN ======================== */
 
-    char id[5], nome[100], cpf[12], matricula[20], turma[10];
-    int encontrado = 0;
-
-    while (fscanf(f, "%4[^;];%99[^;];%11[^;];%19[^;];%9[^\n]\n",
-                  id, nome, cpf, matricula, turma) != EOF) {
-
-        if (strcmp(id, idBusca) == 0) {
-            printf("\nAluno encontrado:\n");
-            printf("ID: %s\nNome: %s\nCPF: %s\nMatricula: %s\nTurma: %s\n",
-                   id, nome, cpf, matricula, turma);
-            encontrado = 1;
-            break;
-        }
-    }
-
-    if (!encontrado) {
-        printf("\nAluno nao encontrado.\n");
-    }
-
-    fclose(f);
-}
-
-// Cadastrar aluno
-void cadastrarAluno() {
-    FILE *f = fopen(ARQUIVO, "a");
-
-    char id[5], nome[100], cpf[12], matricula[20], turma[10];
-
-    printf("Novo aluno:\n");
-
-    // Garantir ID único
-    do {
-        printf("ID: ");
-        scanf("%4s", id);
-
-        if (idExiste(id)) {
-            printf("ID ja existe! Digite outro.\n");
-        }
-
-    } while (idExiste(id));
-
-    printf("Nome: ");
-    scanf(" %[^\n]", nome);
-
-    // CPF com 11 dígitos
-    printf("CPF (11 digitos): ");
-    scanf("%11s", cpf);
-
-    printf("Matricula: ");
-    scanf("%19s", matricula);
-
-    printf("Turma: ");
-    scanf("%9s", turma);
-
-    fprintf(f, "%s;%s;%s;%s;%s\n", id, nome, cpf, matricula, turma);
-
-    printf("\nAluno cadastrado com sucesso!\n");
-
-    fclose(f);
-}
-
-// Programa principal
 int main() {
-    int opcao;
-    char idBusca[5];
+    escola_popular();
+    hospital_popular();
+    banco_popular();
+    hotel_popular();
 
-    criarArquivoSeNaoExistir();
+    if (!fazer_login()) return 1;
 
+    int op;
     do {
-        printf("\n--- MENU ---\n");
-        printf("1 - Buscar aluno\n");
-        printf("2 - Cadastrar aluno\n");
-        printf("0 - Sair\n");
-        printf("Escolha: ");
-        scanf("%d", &opcao);
-
-        switch (opcao) {
-            case 1:
-                printf("Digite o ID: ");
-                scanf("%4s", idBusca);
-                buscarAlunoPorID(idBusca);
-                break;
-
-            case 2:
-                cadastrarAluno();
-                break;
-
-            case 0:
-                printf("Saindo...\n");
-                break;
-
-            default:
-                printf("Opcao invalida!\n");
+        limpar_tela(); linha(50);
+        printf("   SISTEMA DE GERENCIAMENTO DE REGISTROS\n"); linha(50);
+        printf("  Relatorio .txt atualizado a cada cadastro\n\n");
+        printf("  1.  Escola    ->  escola.txt\n");
+        printf("  2.  Hospital  ->  hospital.txt\n");
+        printf("  3.  Banco     ->  banco.txt\n");
+        printf("  4.  Hotel     ->  hotel.txt\n");
+        printf("  0.  Sair\n");
+        linha(50);
+        printf("  Opcao: "); scanf("%d", &op);
+        switch(op) {
+            case 1: menu_escola();   break;
+            case 2: menu_hospital(); break;
+            case 3: menu_banco();    break;
+            case 4: menu_hotel();    break;
+            case 0: printf("\n  Ate logo!\n\n"); break;
+            default: printf("  Opcao invalida!\n"); pausar(); break;
         }
-
-    } while (opcao != 0);
+    } while(op!=0);
 
     return 0;
 }
